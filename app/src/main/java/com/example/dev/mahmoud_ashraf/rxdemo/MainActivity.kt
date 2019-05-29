@@ -7,11 +7,8 @@ import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
+import io.reactivex.functions.Predicate
 import io.reactivex.schedulers.Schedulers
-import io.reactivex.internal.util.NotificationLite.disposable
-import io.reactivex.internal.disposables.DisposableHelper.dispose
-
-
 
 
 class MainActivity : AppCompatActivity() {
@@ -22,14 +19,12 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // 1. Create an Observable that emits data.
-        // Below we have created an Observable that emits list of animal names.
-        // Here just() operator is used to emit few animal names.
 
-        val animalsObservable = Observable.just("Ant", "Bee", "Cat", "Dog", "Fox")
+         // 1 - observable
+        val animalsObservable = getAnimalsObservable()
 
         /*
-        2. Create an Observer that listen to Observable.
+        2. Observer that listen to Observable.
          Observer provides the below interface methods to know the the state of Observable.
         onSubscribe(): Method will be called when an Observer subscribes to Observable.
         onNext(): This method will be called when Observable starts emitting the data.
@@ -48,10 +43,14 @@ class MainActivity : AppCompatActivity() {
         This tells the Observer to receive the data on android UI thread so that you can take any UI related actions.
          */
 
+        // observer subscribing to observable
         animalsObservable
             .subscribeOn(Schedulers.io())
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(animalsObserver);
+            .filter(Predicate<String> { s -> s.toLowerCase().startsWith("b") })
+            .subscribeWith(animalsObserver)
+
+
 
         /*
         Disposable: Disposable is used to dispose the subscription when
@@ -63,11 +62,22 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun getAnimalsObservable(): Observable<String> {
+        return Observable.fromArray(
+            "Ant", "Ape",
+            "Bat", "Bee", "Bear", "Butterfly",
+            "Cat", "Crab", "Cod",
+            "Dog", "Dove",
+            "Fox", "Frog"
+        )
+    }
+
     override fun onDestroy() {
         super.onDestroy()
 
         // don't send events once the activity is destroyed
         disposable?.dispose()
+        Log.e("---","disposed!")
     }
 
     private fun getAnimalsObserver(): Observer<String> {
