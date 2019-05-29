@@ -8,9 +8,15 @@ import io.reactivex.Observer
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
+import io.reactivex.internal.util.NotificationLite.disposable
+import io.reactivex.internal.disposables.DisposableHelper.dispose
+
+
 
 
 class MainActivity : AppCompatActivity() {
+
+    private var disposable: Disposable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,12 +53,30 @@ class MainActivity : AppCompatActivity() {
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(animalsObserver);
 
+        /*
+        Disposable: Disposable is used to dispose the subscription when
+         an Observer no longer wants to listen to Observable.
+         In android disposable are very useful in avoiding memory leaks.
+         */
+
+
+
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        // don't send events once the activity is destroyed
+        disposable?.dispose()
     }
 
     private fun getAnimalsObserver(): Observer<String> {
         return object : Observer<String> {
            override fun onSubscribe(d: Disposable) {
                 Log.e("++++++++", "onSubscribe")
+
+               // to can dispose it when activity destroy
+               disposable = d
             }
 
            override fun onNext(s: String) {
